@@ -2,6 +2,16 @@ import discord
 from discord.ext import commands, tasks
 import schedule
 import time
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+TOKEN = os.getenv('TOKEN')
+
+if TOKEN is None:
+    print("Error: Token not found!")
+else:
+    print("Token loaded successfully!")
 
 clan_events = []
 
