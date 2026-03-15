@@ -175,5 +175,5 @@ async def keep_alive():
 @keep_alive.before_loop
 async def before_keep_alive():
     await bot.wait_until_ready()
-    
+
 bot.run(TOKEN)
