@@ -131,22 +131,36 @@ async def help_command(ctx):
  **!help**
    Show this help message""")
                   
-@tasks.loop(hours=24)
+@tasks.loop(minutes=30)
 async def daily_reminder():
     channel = discord.utils.get(bot.get_all_channels(), name='general')
     if channel:
         conn = sqlite3.connect('events.db')
         c = conn.cursor()
-        c.execute("SELECT id, name, date FROM events ORDER BY date")
+        c.execute("SELECT id, name, date FROM events")
         all_events = c.fetchall()
         conn.close()
 
-        if len(all_events) > 0:
-            message = "⚔️ **Daily Clan Events Reminder!**\n"
-            for event in all_events:
-                message += f"{event[0]}. {event[1]} — {event[2]}\n"
-            await channel.send(message)
+        now = datetime.now()
 
+        for event in all_events:
+            event_time = datetime.strptime(event[2], '%Y-%m-%d %H:%M')
+            time_left = event_time - now
+            minutes_left = time_left.total_seconds() / 60
+
+            if 115 <= minutes_left <= 125:
+                await channel.send(
+                    f" **2 Hour Reminder!**\n"
+                    f" {event[1]} starts in 2 hours!\n"
+                    f" {event[2]}"
+                )
+
+            elif 25 <= minutes_left <= 35:
+                await channel.send(
+                    f" **30 Minute Reminder!**\n"
+                    f" {event[1]} starts in 30 minutes!\n"
+                    f" {event[2]}"
+                )
 @daily_reminder.before_loop
 async def before_reminder():
     await bot.wait_until_ready()
