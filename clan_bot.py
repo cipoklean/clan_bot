@@ -34,10 +34,11 @@ async def hello(ctx):
     await ctx.send("LastZ Clan Bot is here! Ready to remind you of clan events!")
 
 @bot.command()
-async def addevent(ctx,event_name, date_time):
+async def addevent(ctx, event_name, date, time):
     try:
-        event_name = datetime.strptime(date_time, '%Y-%m-%d %H:%M')
-        conn = sqlite3.connect('events.bd')
+        date_time = f"{date} {time}"
+        datetime.strptime(date_time, '%Y-%m-%d %H:%M')
+        conn = sqlite3.connect('events.db')
         c= conn.cursor()
         c.execute("INSERT INTO events (name, date) VALUES (?, ?)",
                   (event_name, date_time))
@@ -46,7 +47,7 @@ async def addevent(ctx,event_name, date_time):
 
         await ctx.send(f"✅ Event added!\n Event: {event_name}\n Date: {date_time}")
     except ValueError:
-        await ctx.send("Wrong date format! Use: !addevent EventName 2026-03-21 20:00")
+        await ctx.send(" Wrong format! Use: !addevent Raid 2026-03-21 20:00")
 
 @bot.command()
 async def events(ctx):
@@ -56,7 +57,7 @@ async def events(ctx):
     all_events = c.fetchall()
     conn.close()
 
-    if len(clan_events) == 0:
+    if len(all_events) == 0:
         await ctx.send("No upcoming events! Use !addevent to add one.")
     else:
         message = "**Upcoming Clan Events:**\n"
@@ -78,19 +79,24 @@ async def nextevent(ctx):
         await ctx.send(f"**Next Event:**\n {event[1]}\n {event[2]}")
 
 @bot.command()
-async def removeevent(ctx, event_id:int):
+async def removeevent(ctx, event_id: int):
     conn = sqlite3.connect('events.db')
     c = conn.cursor()
     c.execute("SELECT name, date FROM events WHERE id = ?", (event_id,))
     event = c.fetchone()
 
     if event is None:
-        await ctx.send("Event not found! Use !events to see the list.")
+        await ctx.send(" Event not found! Use !events to see the correct ID.")
     else:
         c.execute("DELETE FROM events WHERE id = ?", (event_id,))
+        c.execute("CREATE TABLE IF NOT EXISTS events_temp AS SELECT * FROM events")
+        c.execute("DELETE FROM events")
+        c.execute("INSERT INTO events SELECT ROW_NUMBER() OVER (ORDER BY date), name, date FROM events_temp")
+        c.execute("DROP TABLE events_temp")
         conn.commit()
-        await ctx.send(f"Removed: **{event[0]}** - {event[1]}")
+        await ctx.send(f" Removed: **{event[0]}** — {event[1]}")
     conn.close()
+
 @bot.command()
 async def clearevents(ctx):
     conn = sqlite3.connect('events.db')
