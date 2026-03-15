@@ -27,7 +27,10 @@ setup_database
 async def on_ready():
     print(f'{bot.user} is online and ready')
     setup_database()
-    daily_reminder.start()
+    if not daily_reminder.is_running():
+        daily_reminder.start()
+    if not keep_alive.is_running():
+        keep_alive.start()
 
 @bot.command()
 async def hello(ctx):
@@ -164,5 +167,13 @@ async def daily_reminder():
 @daily_reminder.before_loop
 async def before_reminder():
     await bot.wait_until_ready()
- 
+
+@tasks.loop(minutes=5)
+async def keep_alive():
+    print("Bot is alive!")
+
+@keep_alive.before_loop
+async def before_keep_alive():
+    await bot.wait_until_ready()
+    
 bot.run(TOKEN)
